@@ -323,7 +323,7 @@
             const yOnLine = baseY + wave + noise;
             const offsetForward = 6;
             const y = yOnLine - offsetForward;
-            const baseSize = 1.1;
+            const baseSize = 3;
             const size = baseSize + (Math.sin(ratio * 20 + offset * 10) + 1) * 0.45;
             const px = x - size / 2;
             const py = y - size / 2;
