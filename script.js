@@ -311,7 +311,7 @@
 
         if (pixel) {
           ctx.fillStyle = "rgba(0,0,0,0.45)";
-          const step = 14;
+          const step = 6;
           for (let i = 0; i <= segments; i += step) {
             const ratio = i / segments;
             const x = ratio * width;
@@ -324,7 +324,7 @@
             const offsetForward = 6;
             const y = yOnLine - offsetForward;
             const baseSize = 3;
-            const size = baseSize + (Math.sin(ratio * 20 + offset * 10) + 1) * 0.45;
+            const size = baseSize + (Math.sin(ratio * 20 + offset * 10) + 1) * 1;
             const px = x - size / 2;
             const py = y - size / 2;
             ctx.fillRect(px, py, size, size);
