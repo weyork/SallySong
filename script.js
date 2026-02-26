@@ -101,13 +101,8 @@
     const modeBtn = $("[data-mode-toggle]");
     if (modeBtn) {
       const labelSpan = modeBtn.querySelector(".mode-toggle-text");
-      if (labelSpan) {
-        labelSpan.textContent = value === "zh" ? "En" : "Ch";
-      }
-      modeBtn.setAttribute(
-        "aria-label",
-        value === "zh" ? "Switch to English" : "切换到中文"
-      );
+      if (labelSpan) labelSpan.textContent = value === "zh" ? "En" : "Ch";
+      modeBtn.setAttribute("aria-label", value === "zh" ? "Switch to English" : "切换到中文");
     }
   }
 
@@ -160,10 +155,7 @@
         if (!target) return;
         e.preventDefault();
         setNavOpen(false);
-        target.scrollIntoView({
-          behavior: prefersReducedMotion ? "auto" : "smooth",
-          block: "start",
-        });
+        target.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", block: "start" });
         history.pushState(null, "", href);
       });
     });
@@ -171,9 +163,7 @@
 
   // Active nav highlight
   const sectionIds = ["#about", "#projects", "#contact"];
-  const navLinks = $$(".nav-panel .nav-link").filter((a) =>
-    sectionIds.includes(a.getAttribute("href") || "")
-  );
+  const navLinks = $$(".nav-panel .nav-link").filter((a) => sectionIds.includes(a.getAttribute("href") || ""));
 
   function setCurrent(hash) {
     navLinks.forEach((a) => {
@@ -249,243 +239,219 @@
   const year = $("[data-year]");
   if (year) year.textContent = String(new Date().getFullYear());
 
-  // Home mountain canvas (multi-wave + particles + mouse influence)
+  // ===== Canvas: dot-only multi-wave groups + denser lines + stronger mouse influence =====
   const canvas = $(".mountain-canvas");
   if (canvas && canvas instanceof HTMLCanvasElement) {
     const ctx = canvas.getContext("2d");
     if (ctx) {
       let width = 0;
       let height = 0;
-      let devicePixelRatio = window.devicePixelRatio || 1;
+      let devicePixelRatio = 1;
+
       let mouseX = 0.5;
       let mouseY = 0.5;
+      let lastPointerAt = performance.now();
+
       let lastTime = 0;
+
+      // performance scaling (mobile tends to need fewer points)
+      const isCoarsePointer = window.matchMedia?.("(pointer: coarse)")?.matches ?? false;
+      const perfScale = isCoarsePointer ? 0.72 : 1; // lower = fewer points/particles
 
       function resize() {
         const rect = canvas.getBoundingClientRect();
         width = rect.width;
         height = rect.height;
         devicePixelRatio = window.devicePixelRatio || 1;
-        canvas.width = width * devicePixelRatio;
-        canvas.height = height * devicePixelRatio;
+
+        canvas.width = Math.max(1, Math.floor(width * devicePixelRatio));
+        canvas.height = Math.max(1, Math.floor(height * devicePixelRatio));
+
         ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-        ctx.imageSmoothingEnabled = true;
+
+        // dot rendering: keep edges crisp-ish across engines
+        ctx.imageSmoothingEnabled = false;
       }
 
+      // Some lines are denser via smaller step
       const lines = [
-        // 上方：三条较靠近
-        { offset: 0.22, amp: 26, freq: 1.0, pixel: false },
-        { offset: 0.25, amp: 28, freq: 1.15, pixel: true },
-        { offset: 0.28, amp: 30, freq: 1.3, pixel: false },
-        // 中部：两条交织
-        { offset: 0.40, amp: 32, freq: 1.6, pixel: true },
-        { offset: 0.44, amp: 34, freq: 1.8, pixel: false },
-        // 中下：四条较密的组合
-        { offset: 0.56, amp: 30, freq: 1.7, pixel: true },
-        { offset: 0.59, amp: 32, freq: 1.9, pixel: false },
-        { offset: 0.62, amp: 30, freq: 2.1, pixel: true },
-        { offset: 0.65, amp: 28, freq: 1.85, pixel: false },
-        // 底部：两条更平一点的线
-        { offset: 0.78, amp: 22, freq: 1.1, pixel: true },
-        { offset: 0.82, amp: 20, freq: 0.95, pixel: false },
+        // Top group (3)
+        { offset: 0.22, amp: 30, freq: 1.0, step: 8, baseSize: 3.4, jitterSize: 1.2 },
+        { offset: 0.25, amp: 34, freq: 1.15, step: 5, baseSize: 4.0, jitterSize: 1.6 }, // denser
+        { offset: 0.28, amp: 36, freq: 1.3, step: 8, baseSize: 3.4, jitterSize: 1.2 },
+
+        // Mid group (2)
+        { offset: 0.40, amp: 40, freq: 1.6, step: 6, baseSize: 4.1, jitterSize: 1.6 }, // denser
+        { offset: 0.44, amp: 42, freq: 1.8, step: 9, baseSize: 3.2, jitterSize: 1.1 },
+
+        // Lower-mid group (4)
+        { offset: 0.56, amp: 40, freq: 1.7, step: 6, baseSize: 4.0, jitterSize: 1.6 }, // denser
+        { offset: 0.59, amp: 42, freq: 1.9, step: 9, baseSize: 3.1, jitterSize: 1.1 },
+        { offset: 0.62, amp: 40, freq: 2.1, step: 5, baseSize: 4.0, jitterSize: 1.7 }, // densest
+        { offset: 0.65, amp: 38, freq: 1.85, step: 9, baseSize: 3.0, jitterSize: 1.1 },
+
+        // Bottom group (2)
+        { offset: 0.78, amp: 28, freq: 1.1, step: 6, baseSize: 4.0, jitterSize: 1.5 },
+        { offset: 0.82, amp: 26, freq: 0.95, step: 10, baseSize: 2.8, jitterSize: 1.0 },
       ];
 
-      // ---------- Particles (floating near lines) ----------
+      // Uniform “bigger swell” baseline
+      lines.forEach((l) => (l.amp *= 1.25));
+
+      // DPR compensation: prevent super-thick look on high-DPR devices
+      function dprComp(v) {
+        const dpr = devicePixelRatio || 1;
+        return v * (1 / Math.min(2, dpr));
+      }
+
+      function clamp01(x) {
+        return Math.max(0, Math.min(1, x));
+      }
+
+      function smoothstep01(x) {
+        const t = clamp01(x);
+        return t * t * (3 - 2 * t);
+      }
+
+      function localInfluence(x, yRef) {
+        const mx = mouseX * width;
+        const my = mouseY * height;
+        const dx = x - mx;
+        const dy = (yRef ?? my) - my;
+
+        // larger radius for more obvious interaction
+        const R = 220;
+        const dist = Math.hypot(dx, dy);
+
+        // smooth falloff (0..1)
+        return 1 - smoothstep01(dist / R);
+      }
+
+      // -------- Particles (floating near lines) --------
       const particles = [];
-      const PARTICLE_COUNT = 160;
+      let PARTICLE_COUNT = Math.floor(150 * perfScale);
 
       function initParticles() {
         particles.length = 0;
         for (let i = 0; i < PARTICLE_COUNT; i++) {
           particles.push({
             x: Math.random() * (width || 1),
-            y: Math.random() * (height || 1),
             lineIndex: Math.floor(Math.random() * lines.length),
             phase: Math.random() * Math.PI * 2,
             drift: 6 + Math.random() * 18,
-            speed: 0.25 + Math.random() * 0.9,
-            size: 1.2 + Math.random() * 2.2,
+            speed: 18 + Math.random() * 55, // pixels/sec baseline
+            size: 1.2 + Math.random() * 2.0,
           });
         }
       }
 
-// ====== REPLACE your current yAt(), drawLine() with the versions below ======
+      // y position on a given line at x (used by particles + line dots)
+      function yAt(line, x, tSec) {
+        const { offset, amp, freq } = line;
+        const baseY = height * offset;
+        const ratio = x / (width || 1);
 
-// y position on a given line at x (used by particles)
-function yAt(line, x, t) {
-  const { offset, amp, freq } = line;
-  const baseY = height * offset;
-  const ratio = x / (width || 1);
+        // Big swell + fast jitter + livelier noise
+        const noiseScale = 3.0 + mouseX * 6.2;
 
-  const timeOffset = t * 0.0006;
+        const swell =
+          Math.sin(ratio * Math.PI * (freq * 0.62) + tSec * 1.35 + mouseX * 1.2) *
+          (amp * 1.08 * (0.6 + 0.4 * Math.cos(ratio * Math.PI)));
 
-  // stronger, livelier noise
-  const noiseScale = 3.0 + mouseX * 6.2;
+        const jitter =
+          Math.sin(ratio * Math.PI * (freq * 3.6) + tSec * 6.8 + offset * 3.2) *
+          (amp * 0.22);
 
-  // Local mouse influence (distance falloff)
-  const dx = x - mouseX * width;
-  const dy0 = baseY - mouseY * height;
-  const dist = Math.hypot(dx, dy0);
-  const R = 160;
-  const influence = Math.max(0, 1 - dist / R);
+        const noise =
+          Math.sin(ratio * 10 + tSec * 1.3 + offset * 5) * noiseScale * 0.4;
 
-  // Big swell (slow + smooth)
-  const swell =
-    Math.sin(ratio * Math.PI * (freq * 0.62) + timeOffset * 1.35 + mouseX * 1.2) *
-    (amp * 1.05 * (0.6 + 0.4 * Math.cos(ratio * Math.PI)));
+        // Stronger mouse warp (local)
+        const inf = localInfluence(x, baseY);
+        const warp = inf * Math.sin(tSec * 9.5 + ratio * 12) * (amp * 0.46);
 
-  // Fast jitter (dense + quicker, smaller amplitude)
-  const jitter =
-    Math.sin(ratio * Math.PI * (freq * 3.4) + timeOffset * 6.6 + offset * 3.2) *
-    (amp * 0.22);
+        // Extra “bend toward pointer” (more obvious)
+        const bend = inf * Math.sin(tSec * 3.2 + ratio * 7.2) * (amp * 0.18);
 
-  const wave = swell + jitter;
+        return baseY + swell + jitter + noise + warp + bend;
+      }
 
-  const noise =
-    Math.sin(ratio * 10 + timeOffset * 1.3 + offset * 5) * noiseScale * 0.4;
+      // Draw a line as DOTS ONLY (no ctx.stroke)
+      function drawDotLine(line, tSec, dtSec) {
+        const segments = Math.floor(260 * perfScale);
+        const step = Math.max(3, Math.floor((line.step || 8) / perfScale));
 
-  // stronger mouse warp
-  const warp =
-    influence * Math.sin(timeOffset * 10 + ratio * 12) * (amp * 0.34);
+        for (let i = 0; i <= segments; i += step) {
+          const ratio = i / segments;
+          const x = ratio * width;
 
-  return baseY + wave + noise + warp;
-}
+          const y = yAt(line, x, tSec);
 
-function drawLine(line, t) {
-  const { offset, amp, freq, pixel } = line;
-  const baseY = height * offset;
-  const segments = 260;
-  const timeOffset = t * 0.0006;
+          // stronger local influence: size/alpha/extra jitter
+          const inf = localInfluence(x, y);
 
-  // thicker strokes
-  ctx.lineWidth = pixel ? 1.35 : 0.95;
-  ctx.strokeStyle = "rgba(0,0,0,0.55)";
+          // dot size (DPR-compensated)
+          const base = dprComp(line.baseSize ?? 3.2);
+          const jitterSize = dprComp(line.jitterSize ?? 1.2);
 
-  // stronger, livelier noise
-  const noiseScale = 3.0 + mouseX * 6.2;
+          // time-based micro “breathing”
+          const breath = (Math.sin(tSec * 4.2 + ratio * 18 + line.offset * 9) + 1) * 0.5;
 
-  // Stroke line
-  ctx.beginPath();
-  for (let i = 0; i <= segments; i++) {
-    const ratio = i / segments;
-    const x = ratio * width;
+          // mouse makes dots larger and more present
+          const size = base + breath * jitterSize + inf * dprComp(2.6);
 
-    // Big swell (slow + smooth)
-    const swell =
-      Math.sin(ratio * Math.PI * (freq * 0.62) + timeOffset * 1.35 + mouseX * 1.2) *
-      (amp * 1.05 * (0.6 + 0.4 * Math.cos(ratio * Math.PI)));
+          // extra positional jitter near mouse (more obvious interaction)
+          const wobble =
+            inf *
+            Math.sin(tSec * 10.5 + ratio * 22 + line.freq * 2) *
+            dprComp(3.2);
 
-    // Fast jitter (dense + quicker, smaller amplitude)
-    const jitter =
-      Math.sin(ratio * Math.PI * (freq * 3.4) + timeOffset * 6.6 + offset * 3.2) *
-      (amp * 0.22);
+          // slightly offset forward to imply motion (subtle)
+          const y2 = y + wobble - dprComp(2.0);
 
-    const wave = swell + jitter;
+          // alpha increases near mouse; overall tuned by perf
+          const a = 0.18 + inf * 0.50;
+          ctx.fillStyle = `rgba(0,0,0,${a})`;
 
-    const noise =
-      Math.sin(ratio * 10 + timeOffset * 1.3 + offset * 5) * noiseScale * 0.4;
+          ctx.fillRect(x - size / 2, y2 - size / 2, size, size);
 
-    // Local mouse influence
-    const dx = x - mouseX * width;
-    const dy = baseY - mouseY * height;
-    const dist = Math.hypot(dx, dy);
-    const R = 160;
-    const influence = Math.max(0, 1 - dist / R);
+          // Optional: tiny “secondary dot” on denser lines (adds richness without stroke)
+          // only on lines with small step
+          if (step <= 6 && (i % (step * 2) === 0)) {
+            const s2 = size * 0.55;
+            const a2 = (0.10 + inf * 0.25) * 0.9;
+            ctx.fillStyle = `rgba(0,0,0,${a2})`;
+            ctx.fillRect(x - s2 / 2, y2 + dprComp(3.4) - s2 / 2, s2, s2);
+          }
+        }
+      }
 
-    // stronger mouse warp
-    const warp =
-      influence * Math.sin(timeOffset * 10 + ratio * 12) * (amp * 0.34);
-
-    const y = baseY + wave + noise + warp;
-
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  }
-  ctx.stroke();
-
-  // Pixel accents
-  if (pixel) {
-    const step = 5; // denser pixels -> thicker feel
-    for (let i = 0; i <= segments; i += step) {
-      const ratio = i / segments;
-      const x = ratio * width;
-
-      // Big swell (slow + smooth) - slightly different timing for pixel layer
-      const swell =
-        Math.sin(ratio * Math.PI * (freq * 0.62) + timeOffset * 1.55 + mouseX * 1.35) *
-        (amp * 1.05 * (0.6 + 0.4 * Math.cos(ratio * Math.PI)));
-
-      // Fast jitter (dense + quicker)
-      const jitter =
-        Math.sin(ratio * Math.PI * (freq * 3.8) + timeOffset * 7.4 + offset * 3.2) *
-        (amp * 0.20);
-
-      const wave = swell + jitter;
-
-      const noise =
-        Math.sin(ratio * 10 + timeOffset * 1.3 + offset * 5) * noiseScale * 0.4;
-
-      // Local mouse influence
-      const dx = x - mouseX * width;
-      const dy = baseY - mouseY * height;
-      const dist = Math.hypot(dx, dy);
-      const R = 160;
-      const influence = Math.max(0, 1 - dist / R);
-
-      // stronger mouse warp
-      const warp =
-        influence * Math.sin(timeOffset * 10 + ratio * 12) * (amp * 0.34);
-
-      const yOnLine = baseY + wave + noise + warp;
-
-      const offsetForward = 6;
-      const y = yOnLine - offsetForward;
-
-      // larger pixels -> thicker look
-      const baseSize = 4.2;
-      const size =
-        baseSize +
-        (Math.sin(ratio * 20 + offset * 10) + 1) * 1.05 +
-        influence * 1.9;
-
-      ctx.fillStyle = `rgba(0,0,0,${0.33 + influence * 0.30})`;
-      ctx.fillRect(x - size / 2, y - size / 2, size, size);
-    }
-  }
-}
-
-      function drawParticles(t) {
+      function drawParticles(tSec, dtSec) {
         ctx.save();
-        ctx.globalAlpha = 0.55;
+        ctx.globalAlpha = 0.8;
 
         for (const p of particles) {
-          // Move
-          p.x += p.speed;
-          if (p.x > width + 20) p.x = -20;
+          // Move using dt (consistent across 60/120Hz)
+          p.x += p.speed * dtSec;
+          if (p.x > width + 30) p.x = -30;
 
           const line = lines[p.lineIndex];
-          const centerY = yAt(line, p.x, t);
+          const centerY = yAt(line, p.x, tSec);
 
-          // Local mouse influence
-          const dx = p.x - mouseX * width;
-          const dy = centerY - mouseY * height;
-          const dist = Math.hypot(dx, dy);
-          const R = 170;
-          const influence = Math.max(0, 1 - dist / R);
+          // Local mouse influence around particle
+          const inf = localInfluence(p.x, centerY);
 
-          // Float around line
-          p.phase += 0.035 + p.speed * 0.01;
-          const floatY = Math.sin(p.phase + p.x * 0.01) * p.drift;
+          // Float around the line
+          p.phase += (1.1 + (p.speed / 80) * 0.25) * dtSec;
+          const floatY = Math.sin(p.phase + p.x * 0.012) * p.drift;
 
-          // Mouse makes particles "energize"
-          const y =
-            centerY +
-            floatY +
-            influence * Math.sin(t * 0.01 + p.phase) * 10;
+          // Mouse energizes particles more
+          const y = centerY + floatY + inf * Math.sin(tSec * 10 + p.phase) * 14;
 
-          const s = p.size + influence * 1.4;
+          const base = dprComp(p.size);
+          const s = base + inf * dprComp(2.0);
+          const a = 0.12 + inf * 0.55;
 
-          ctx.fillStyle = `rgba(0,0,0,${0.25 + influence * 0.35})`;
+          ctx.fillStyle = `rgba(0,0,0,${a})`;
           ctx.fillRect(p.x - s / 2, y - s / 2, s, s);
         }
 
@@ -493,18 +459,26 @@ function drawLine(line, t) {
       }
 
       function loop(timestamp) {
-        const dt = timestamp - lastTime;
+        const tSec = timestamp / 1000;
+        const dtSec = Math.min(0.05, (timestamp - (lastTime || timestamp)) / 1000);
         lastTime = timestamp;
-        if (dt > 80) lastTime = timestamp;
+
+        // Mobile/idle: animate a virtual pointer so it doesn’t “freeze” without hover
+        if (timestamp - lastPointerAt > 1600) {
+          mouseX = 0.5 + 0.18 * Math.sin(timestamp * 0.00035);
+          mouseY = 0.5 + 0.12 * Math.cos(timestamp * 0.00028);
+        }
 
         ctx.clearRect(0, 0, width, height);
 
+        // Draw dot lines
         ctx.save();
-        ctx.globalAlpha = 0.4;
-        for (const line of lines) drawLine(line, timestamp);
+        ctx.globalAlpha = 0.55;
+        for (const line of lines) drawDotLine(line, tSec, dtSec);
         ctx.restore();
 
-        drawParticles(timestamp);
+        // Floating particles near lines
+        drawParticles(tSec, dtSec);
 
         requestAnimationFrame(loop);
       }
@@ -512,9 +486,9 @@ function drawLine(line, t) {
       resize();
       initParticles();
 
-      // Keep resize behavior consistent (and re-init particles)
       window.addEventListener("resize", () => {
         resize();
+        PARTICLE_COUNT = Math.floor(150 * perfScale);
         initParticles();
       });
 
@@ -522,8 +496,9 @@ function drawLine(line, t) {
         const rect = canvas.getBoundingClientRect();
         mouseX = (e.clientX - rect.left) / (rect.width || 1);
         mouseY = (e.clientY - rect.top) / (rect.height || 1);
-        mouseX = Math.max(0, Math.min(1, mouseX));
-        mouseY = Math.max(0, Math.min(1, mouseY));
+        mouseX = clamp01(mouseX);
+        mouseY = clamp01(mouseY);
+        lastPointerAt = performance.now();
       });
 
       requestAnimationFrame(loop);
