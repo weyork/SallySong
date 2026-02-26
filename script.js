@@ -309,115 +309,150 @@
         }
       }
 
-      // y position on a given line at x (used by particles)
-      function yAt(line, x, t) {
-        const { offset, amp, freq } = line;
-        const baseY = height * offset;
-        const ratio = x / (width || 1);
+// ====== REPLACE your current yAt(), drawLine() with the versions below ======
 
-        const timeOffset = t * 0.0006;
-        const noiseScale = 2 + mouseX * 4;
+// y position on a given line at x (used by particles)
+function yAt(line, x, t) {
+  const { offset, amp, freq } = line;
+  const baseY = height * offset;
+  const ratio = x / (width || 1);
 
-        // Local mouse influence (distance falloff)
-        const dx = x - mouseX * width;
-        const dy0 = baseY - mouseY * height;
-        const dist = Math.hypot(dx, dy0);
-        const R = 160;
-        const influence = Math.max(0, 1 - dist / R);
+  const timeOffset = t * 0.0006;
 
-        const wave =
-          Math.sin(ratio * Math.PI * freq + timeOffset * 2.4 + mouseX * 1.6) *
-          (amp * 0.95 * (0.6 + 0.4 * Math.cos(ratio * Math.PI)));
+  // stronger, livelier noise
+  const noiseScale = 3.0 + mouseX * 6.2;
 
-        const noise =
-          Math.sin(ratio * 10 + timeOffset * 1.3 + offset * 5) * noiseScale * 0.4;
+  // Local mouse influence (distance falloff)
+  const dx = x - mouseX * width;
+  const dy0 = baseY - mouseY * height;
+  const dist = Math.hypot(dx, dy0);
+  const R = 160;
+  const influence = Math.max(0, 1 - dist / R);
 
-        const warp =
-          influence * Math.sin(timeOffset * 10 + ratio * 12) * (amp * 0.18);
+  // Big swell (slow + smooth)
+  const swell =
+    Math.sin(ratio * Math.PI * (freq * 0.62) + timeOffset * 1.35 + mouseX * 1.2) *
+    (amp * 1.05 * (0.6 + 0.4 * Math.cos(ratio * Math.PI)));
 
-        return baseY + wave + noise + warp;
-      }
+  // Fast jitter (dense + quicker, smaller amplitude)
+  const jitter =
+    Math.sin(ratio * Math.PI * (freq * 3.4) + timeOffset * 6.6 + offset * 3.2) *
+    (amp * 0.22);
 
-      function drawLine(line, t) {
-        const { offset, amp, freq, pixel } = line;
-        const baseY = height * offset;
-        const segments = 260;
-        const noiseScale = 2 + mouseX * 4;
-        const timeOffset = t * 0.0006;
+  const wave = swell + jitter;
 
-        ctx.lineWidth = 0.4;
-        ctx.strokeStyle = "rgba(0,0,0,0.55)";
+  const noise =
+    Math.sin(ratio * 10 + timeOffset * 1.3 + offset * 5) * noiseScale * 0.4;
 
-        // Stroke line
-        ctx.beginPath();
-        for (let i = 0; i <= segments; i++) {
-          const ratio = i / segments;
-          const x = ratio * width;
+  // stronger mouse warp
+  const warp =
+    influence * Math.sin(timeOffset * 10 + ratio * 12) * (amp * 0.34);
 
-          const wave =
-            Math.sin(ratio * Math.PI * freq + timeOffset * 2.4 + mouseX * 1.6) *
-            (amp * 0.95 * (0.6 + 0.4 * Math.cos(ratio * Math.PI)));
+  return baseY + wave + noise + warp;
+}
 
-          const noise =
-            Math.sin(ratio * 10 + timeOffset * 1.3 + offset * 5) * noiseScale * 0.4;
+function drawLine(line, t) {
+  const { offset, amp, freq, pixel } = line;
+  const baseY = height * offset;
+  const segments = 260;
+  const timeOffset = t * 0.0006;
 
-          // Local mouse influence
-          const dx = x - mouseX * width;
-          const dy = baseY - mouseY * height;
-          const dist = Math.hypot(dx, dy);
-          const R = 160;
-          const influence = Math.max(0, 1 - dist / R);
+  // thicker strokes
+  ctx.lineWidth = pixel ? 1.35 : 0.95;
+  ctx.strokeStyle = "rgba(0,0,0,0.55)";
 
-          const warp =
-            influence * Math.sin(timeOffset * 10 + ratio * 12) * (amp * 0.18);
+  // stronger, livelier noise
+  const noiseScale = 3.0 + mouseX * 6.2;
 
-          const y = baseY + wave + noise + warp;
+  // Stroke line
+  ctx.beginPath();
+  for (let i = 0; i <= segments; i++) {
+    const ratio = i / segments;
+    const x = ratio * width;
 
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
+    // Big swell (slow + smooth)
+    const swell =
+      Math.sin(ratio * Math.PI * (freq * 0.62) + timeOffset * 1.35 + mouseX * 1.2) *
+      (amp * 1.05 * (0.6 + 0.4 * Math.cos(ratio * Math.PI)));
 
-        // Pixel accents
-        if (pixel) {
-          const step = 6;
-          for (let i = 0; i <= segments; i += step) {
-            const ratio = i / segments;
-            const x = ratio * width;
+    // Fast jitter (dense + quicker, smaller amplitude)
+    const jitter =
+      Math.sin(ratio * Math.PI * (freq * 3.4) + timeOffset * 6.6 + offset * 3.2) *
+      (amp * 0.22);
 
-            const wave =
-              Math.sin(ratio * Math.PI * freq + timeOffset * 3 + mouseX * 2) *
-              (amp * (0.6 + 0.4 * Math.cos(ratio * Math.PI)));
+    const wave = swell + jitter;
 
-            const noise =
-              Math.sin(ratio * 10 + timeOffset * 1.3 + offset * 5) * noiseScale * 0.4;
+    const noise =
+      Math.sin(ratio * 10 + timeOffset * 1.3 + offset * 5) * noiseScale * 0.4;
 
-            // Local mouse influence
-            const dx = x - mouseX * width;
-            const dy = baseY - mouseY * height;
-            const dist = Math.hypot(dx, dy);
-            const R = 160;
-            const influence = Math.max(0, 1 - dist / R);
+    // Local mouse influence
+    const dx = x - mouseX * width;
+    const dy = baseY - mouseY * height;
+    const dist = Math.hypot(dx, dy);
+    const R = 160;
+    const influence = Math.max(0, 1 - dist / R);
 
-            const warp =
-              influence * Math.sin(timeOffset * 10 + ratio * 12) * (amp * 0.18);
+    // stronger mouse warp
+    const warp =
+      influence * Math.sin(timeOffset * 10 + ratio * 12) * (amp * 0.34);
 
-            const yOnLine = baseY + wave + noise + warp;
+    const y = baseY + wave + noise + warp;
 
-            const offsetForward = 6;
-            const y = yOnLine - offsetForward;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
 
-            const baseSize = 3;
-            const size =
-              baseSize +
-              (Math.sin(ratio * 20 + offset * 10) + 1) * 1 +
-              influence * 1.6;
+  // Pixel accents
+  if (pixel) {
+    const step = 5; // denser pixels -> thicker feel
+    for (let i = 0; i <= segments; i += step) {
+      const ratio = i / segments;
+      const x = ratio * width;
 
-            ctx.fillStyle = `rgba(0,0,0,${0.35 + influence * 0.25})`;
-            ctx.fillRect(x - size / 2, y - size / 2, size, size);
-          }
-        }
-      }
+      // Big swell (slow + smooth) - slightly different timing for pixel layer
+      const swell =
+        Math.sin(ratio * Math.PI * (freq * 0.62) + timeOffset * 1.55 + mouseX * 1.35) *
+        (amp * 1.05 * (0.6 + 0.4 * Math.cos(ratio * Math.PI)));
+
+      // Fast jitter (dense + quicker)
+      const jitter =
+        Math.sin(ratio * Math.PI * (freq * 3.8) + timeOffset * 7.4 + offset * 3.2) *
+        (amp * 0.20);
+
+      const wave = swell + jitter;
+
+      const noise =
+        Math.sin(ratio * 10 + timeOffset * 1.3 + offset * 5) * noiseScale * 0.4;
+
+      // Local mouse influence
+      const dx = x - mouseX * width;
+      const dy = baseY - mouseY * height;
+      const dist = Math.hypot(dx, dy);
+      const R = 160;
+      const influence = Math.max(0, 1 - dist / R);
+
+      // stronger mouse warp
+      const warp =
+        influence * Math.sin(timeOffset * 10 + ratio * 12) * (amp * 0.34);
+
+      const yOnLine = baseY + wave + noise + warp;
+
+      const offsetForward = 6;
+      const y = yOnLine - offsetForward;
+
+      // larger pixels -> thicker look
+      const baseSize = 4.2;
+      const size =
+        baseSize +
+        (Math.sin(ratio * 20 + offset * 10) + 1) * 1.05 +
+        influence * 1.9;
+
+      ctx.fillStyle = `rgba(0,0,0,${0.33 + influence * 0.30})`;
+      ctx.fillRect(x - size / 2, y - size / 2, size, size);
+    }
+  }
+}
 
       function drawParticles(t) {
         ctx.save();
