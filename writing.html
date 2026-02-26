@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN" class="sally-root">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Writing — Sally Song</title>
+    <meta
+      name="description"
+      content="Sally Song 的文字：随笔、短句与创作手记。"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到主要内容</a>
+
+    <header class="site-header" data-elevate>
+      <div class="container header-inner">
+        <a class="brand" href="index.html#top" aria-label="返回 Sally Song 首页">
+          <span class="brand-mark" aria-hidden="true">S</span>
+          <span class="brand-text">Sally Song</span>
+        </a>
+
+        <nav class="nav" aria-label="主导航">
+          <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-panel">
+            <span class="sr-only">打开菜单</span>
+            <span class="nav-toggle-bars" aria-hidden="true"></span>
+          </button>
+
+          <div class="nav-panel" id="nav-panel">
+            <a class="nav-link" href="portfolio.html">Portfolio</a>
+            <a class="nav-link" href="writing.html" aria-current="page">Writing</a>
+            <a class="nav-link" href="shop.html">Shop</a>
+            <a class="nav-link" href="contact.html">Contact</a>
+          </div>
+        </nav>
+
+        <div class="header-actions">
+          <button class="mode-toggle" type="button" data-mode-toggle aria-label="Switch language">
+            <span class="mode-toggle-icon" aria-hidden="true"></span>
+            <span class="mode-toggle-text">En</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="page-hero">
+        <div class="container">
+          <p class="kicker">Writing</p>
+          <h1 class="page-title" data-i18n-key="writing-title">文字与片段</h1>
+          <p class="page-subtitle" data-i18n-key="writing-subtitle">
+            不一定是长文章，也可以是一两句想法、一个还没完整成型的句子，或者只属于当下的心情记录。
+          </p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container writing-list">
+          <article class="writing-item card">
+            <div class="writing-meta">
+              <span class="writing-tag">Notebook</span>
+              <span class="writing-date">2025 / 01 / 01（示例）</span>
+            </div>
+            <h2 class="writing-title">关于光线停留的时间</h2>
+            <p class="writing-excerpt">
+              这里是一小段摘要。真正的正文可以单独放在博客平台，也可以之后在这个页面里展开全文。
+            </p>
+          </article>
+
+          <article class="writing-item card">
+            <div class="writing-meta">
+              <span class="writing-tag">Short</span>
+              <span class="writing-date">某日的片段</span>
+            </div>
+            <h2 class="writing-title">有些话只适合写在夜里</h2>
+            <p class="writing-excerpt">
+              比如那些还来不及说出口的、只对自己诚实的句子。可以把这里当成一块安静的角落。
+            </p>
+          </article>
+
+          <article class="writing-item card">
+            <div class="writing-meta">
+              <span class="writing-tag">Process</span>
+              <span class="writing-date">创作手记</span>
+            </div>
+            <h2 class="writing-title">一幅图从想法到完成</h2>
+            <p class="writing-excerpt">
+              用几段话记录一幅作品的诞生过程：为什么开始、过程中有哪些改变、最后你对它的感受。
+            </p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p class="footer-text">© <span data-year></span> Sally Song. All rights reserved.</p>
+        <a class="footer-top" href="#top">回到顶部</a>
+      </div>
+    </footer>
+
+    <script src="./script.js" defer></script>
+  </body>
+</html>
+

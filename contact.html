@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="zh-CN" class="sally-root">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Contact — Sally Song</title>
+    <meta
+      name="description"
+      content="联系 Sally Song：交流创作、合作或其它想法。"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到主要内容</a>
+
+    <header class="site-header" data-elevate>
+      <div class="container header-inner">
+        <a class="brand" href="index.html#top" aria-label="返回 Sally Song 首页">
+          <span class="brand-mark" aria-hidden="true">S</span>
+          <span class="brand-text">Sally Song</span>
+        </a>
+
+        <nav class="nav" aria-label="主导航">
+          <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-panel">
+            <span class="sr-only">打开菜单</span>
+            <span class="nav-toggle-bars" aria-hidden="true"></span>
+          </button>
+
+          <div class="nav-panel" id="nav-panel">
+            <a class="nav-link" href="portfolio.html">Portfolio</a>
+            <a class="nav-link" href="writing.html">Writing</a>
+            <a class="nav-link" href="shop.html">Shop</a>
+            <a class="nav-link" href="contact.html" aria-current="page">Contact</a>
+          </div>
+        </nav>
+
+        <div class="header-actions">
+          <button class="mode-toggle" type="button" data-mode-toggle aria-label="Switch language">
+            <span class="mode-toggle-icon" aria-hidden="true"></span>
+            <span class="mode-toggle-text">En</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="page-hero">
+        <div class="container">
+          <p class="kicker">Contact</p>
+          <h1 class="page-title" data-i18n-key="contact-title">写信给 Sally</h1>
+          <p class="page-subtitle" data-i18n-key="contact-subtitle">
+            无论是合作、展览、工作机会，还是单纯想聊聊创作与生活，都可以从这里开始。
+          </p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container grid-2">
+          <div class="card">
+            <h2 class="card-title">快速联系</h2>
+            <div class="contact-row">
+              <div>
+                <div class="contact-label">Email</div>
+                <div class="contact-value">
+                  <a href="mailto:sallysong98@hotmail.com" data-email>sallysong98@hotmail.com</a>
+                </div>
+              </div>
+              <button class="btn btn-small btn-primary" type="button" data-copy-email>
+                复制
+              </button>
+            </div>
+
+            <div class="divider" role="separator" aria-hidden="true"></div>
+
+            <div class="contact-links" aria-label="社交链接">
+              <a class="link-card" href="#" aria-disabled="true">
+                <span class="link-title">Instagram</span>
+                <span class="link-sub">待填：例如作品日常</span>
+              </a>
+              <a class="link-card" href="#" aria-disabled="true">
+                <span class="link-title">Behance / Dribbble</span>
+                <span class="link-sub">待填：设计与视觉项目</span>
+              </a>
+              <a class="link-card" href="#" aria-disabled="true">
+                <span class="link-title">其它</span>
+                <span class="link-sub">可以是微博 / 小红书 / 个人博客</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2 class="card-title">给我留言</h2>
+            <p class="card-text">
+              这个表单目前是本地展示用：提交后会在页面上显示一条提示，不会真的发送到服务器。
+              如果你希望它直接发邮件或保存到某个服务，我可以之后帮你接第三方表单或写简单后端。
+            </p>
+
+            <form class="form" data-contact-form>
+              <label class="field">
+                <span class="field-label">你的称呼</span>
+                <input class="input" name="name" autocomplete="name" placeholder="怎么称呼你？" required />
+              </label>
+              <label class="field">
+                <span class="field-label">邮箱</span>
+                <input
+                  class="input"
+                  type="email"
+                  name="email"
+                  autocomplete="email"
+                  placeholder="you@example.com"
+                  required
+                />
+              </label>
+              <label class="field">
+                <span class="field-label">内容</span>
+                <textarea class="textarea" name="message" rows="4" placeholder="想聊点什么？" required></textarea>
+              </label>
+              <button class="btn btn-primary" type="submit">发送</button>
+              <p class="form-hint" role="status" aria-live="polite" data-form-status></p>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p class="footer-text">© <span data-year></span> Sally Song. All rights reserved.</p>
+        <a class="footer-top" href="#top">回到顶部</a>
+      </div>
+    </footer>
+
+    <script src="./script.js" defer></script>
+  </body>
+</html>
+

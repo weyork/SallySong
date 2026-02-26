@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-CN" class="sally-root">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Shop — Sally Song</title>
+    <meta
+      name="description"
+      content="Sally Song 的小店：印刷物、数字下载与限量作品。"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到主要内容</a>
+
+    <header class="site-header" data-elevate>
+      <div class="container header-inner">
+        <a class="brand" href="index.html#top" aria-label="返回 Sally Song 首页">
+          <span class="brand-mark" aria-hidden="true">S</span>
+          <span class="brand-text">Sally Song</span>
+        </a>
+
+        <nav class="nav" aria-label="主导航">
+          <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-panel">
+            <span class="sr-only">打开菜单</span>
+            <span class="nav-toggle-bars" aria-hidden="true"></span>
+          </button>
+
+          <div class="nav-panel" id="nav-panel">
+            <a class="nav-link" href="portfolio.html">Portfolio</a>
+            <a class="nav-link" href="writing.html">Writing</a>
+            <a class="nav-link" href="shop.html" aria-current="page">Shop</a>
+            <a class="nav-link" href="contact.html">Contact</a>
+          </div>
+        </nav>
+
+        <div class="header-actions">
+          <button class="mode-toggle" type="button" data-mode-toggle aria-label="Switch language">
+            <span class="mode-toggle-icon" aria-hidden="true"></span>
+            <span class="mode-toggle-text">En</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="page-hero">
+        <div class="container">
+          <p class="kicker">Shop</p>
+          <h1 class="page-title" data-i18n-key="shop-title">小店与印刷物</h1>
+          <p class="page-subtitle" data-i18n-key="shop-subtitle">
+            这里可以放你的作品周边：例如明信片、海报、画册、数字壁纸等。现在先用占位卡片替代，之后可以接入真实购买链接。
+          </p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <div class="shop-grid">
+            <article class="shop-item card">
+              <div class="shop-thumb is-placeholder">
+                <span>Print A</span>
+              </div>
+              <div class="shop-body">
+                <h2 class="shop-title">A3 艺术微喷海报</h2>
+                <p class="shop-desc">
+                  某个系列中的主视觉，适合装裱挂在客厅或工作区。纸张、印刷方式与编号信息可以写在这里。
+                </p>
+                <div class="shop-meta-row">
+                  <span class="shop-price">￥XXX</span>
+                  <span class="shop-note">限量 / 开放版（自定义）</span>
+                </div>
+                <button class="btn btn-small btn-ghost" type="button" disabled>购买链接待添加</button>
+              </div>
+            </article>
+
+            <article class="shop-item card">
+              <div class="shop-thumb is-placeholder">
+                <span>Set</span>
+              </div>
+              <div class="shop-body">
+                <h2 class="shop-title">明信片套组 · 6 张</h2>
+                <p class="shop-desc">
+                  从不同系列里挑选出的六张图像，做成一套可以寄出的明信片，或当作小尺寸装饰画。
+                </p>
+                <div class="shop-meta-row">
+                  <span class="shop-price">￥XXX</span>
+                  <span class="shop-note">预售 / 现货（自定义）</span>
+                </div>
+                <button class="btn btn-small btn-ghost" type="button" disabled>购买链接待添加</button>
+              </div>
+            </article>
+
+            <article class="shop-item card">
+              <div class="shop-thumb is-placeholder">
+                <span>Digital</span>
+              </div>
+              <div class="shop-body">
+                <h2 class="shop-title">数字壁纸合集</h2>
+                <p class="shop-desc">
+                  几张为屏幕优化过的图像，适配手机、iPad 与电脑分辨率，以数字下载的形式提供。
+                </p>
+                <div class="shop-meta-row">
+                  <span class="shop-price">￥XXX</span>
+                  <span class="shop-note">数字下载</span>
+                </div>
+                <button class="btn btn-small btn-ghost" type="button" disabled>购买链接待添加</button>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p class="footer-text">© <span data-year></span> Sally Song. All rights reserved.</p>
+        <a class="footer-top" href="#top">回到顶部</a>
+      </div>
+    </footer>
+
+    <script src="./script.js" defer></script>
+  </body>
+</html>
+
