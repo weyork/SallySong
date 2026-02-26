@@ -2,8 +2,10 @@
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
-  const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? true;
+  const prefersReducedMotion =
+    window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+  const prefersDark =
+    window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? true;
 
   const THEME_KEY = "sallysong.theme";
   const LANG_KEY = "sallysong.lang";
@@ -158,7 +160,10 @@
         if (!target) return;
         e.preventDefault();
         setNavOpen(false);
-        target.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", block: "start" });
+        target.scrollIntoView({
+          behavior: prefersReducedMotion ? "auto" : "smooth",
+          block: "start",
+        });
         history.pushState(null, "", href);
       });
     });
@@ -244,7 +249,7 @@
   const year = $("[data-year]");
   if (year) year.textContent = String(new Date().getFullYear());
 
-  // Home mountain canvas
+  // Home mountain canvas (multi-wave + particles + mouse influence)
   const canvas = $(".mountain-canvas");
   if (canvas && canvas instanceof HTMLCanvasElement) {
     const ctx = canvas.getContext("2d");
@@ -253,6 +258,7 @@
       let height = 0;
       let devicePixelRatio = window.devicePixelRatio || 1;
       let mouseX = 0.5;
+      let mouseY = 0.5;
       let lastTime = 0;
 
       function resize() {
@@ -284,6 +290,54 @@
         { offset: 0.82, amp: 20, freq: 0.95, pixel: false },
       ];
 
+      // ---------- Particles (floating near lines) ----------
+      const particles = [];
+      const PARTICLE_COUNT = 160;
+
+      function initParticles() {
+        particles.length = 0;
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+          particles.push({
+            x: Math.random() * (width || 1),
+            y: Math.random() * (height || 1),
+            lineIndex: Math.floor(Math.random() * lines.length),
+            phase: Math.random() * Math.PI * 2,
+            drift: 6 + Math.random() * 18,
+            speed: 0.25 + Math.random() * 0.9,
+            size: 1.2 + Math.random() * 2.2,
+          });
+        }
+      }
+
+      // y position on a given line at x (used by particles)
+      function yAt(line, x, t) {
+        const { offset, amp, freq } = line;
+        const baseY = height * offset;
+        const ratio = x / (width || 1);
+
+        const timeOffset = t * 0.0006;
+        const noiseScale = 2 + mouseX * 4;
+
+        // Local mouse influence (distance falloff)
+        const dx = x - mouseX * width;
+        const dy0 = baseY - mouseY * height;
+        const dist = Math.hypot(dx, dy0);
+        const R = 160;
+        const influence = Math.max(0, 1 - dist / R);
+
+        const wave =
+          Math.sin(ratio * Math.PI * freq + timeOffset * 2.4 + mouseX * 1.6) *
+          (amp * 0.95 * (0.6 + 0.4 * Math.cos(ratio * Math.PI)));
+
+        const noise =
+          Math.sin(ratio * 10 + timeOffset * 1.3 + offset * 5) * noiseScale * 0.4;
+
+        const warp =
+          influence * Math.sin(timeOffset * 10 + ratio * 12) * (amp * 0.18);
+
+        return baseY + wave + noise + warp;
+      }
+
       function drawLine(line, t) {
         const { offset, amp, freq, pixel } = line;
         const baseY = height * offset;
@@ -294,69 +348,147 @@
         ctx.lineWidth = 0.4;
         ctx.strokeStyle = "rgba(0,0,0,0.55)";
 
+        // Stroke line
         ctx.beginPath();
         for (let i = 0; i <= segments; i++) {
           const ratio = i / segments;
           const x = ratio * width;
+
           const wave =
             Math.sin(ratio * Math.PI * freq + timeOffset * 2.4 + mouseX * 1.6) *
             (amp * 0.95 * (0.6 + 0.4 * Math.cos(ratio * Math.PI)));
+
           const noise =
             Math.sin(ratio * 10 + timeOffset * 1.3 + offset * 5) * noiseScale * 0.4;
-          const y = baseY + wave + noise;
+
+          // Local mouse influence
+          const dx = x - mouseX * width;
+          const dy = baseY - mouseY * height;
+          const dist = Math.hypot(dx, dy);
+          const R = 160;
+          const influence = Math.max(0, 1 - dist / R);
+
+          const warp =
+            influence * Math.sin(timeOffset * 10 + ratio * 12) * (amp * 0.18);
+
+          const y = baseY + wave + noise + warp;
+
           if (i === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         }
         ctx.stroke();
 
+        // Pixel accents
         if (pixel) {
-          ctx.fillStyle = "rgba(0,0,0,0.45)";
           const step = 6;
           for (let i = 0; i <= segments; i += step) {
             const ratio = i / segments;
             const x = ratio * width;
+
             const wave =
               Math.sin(ratio * Math.PI * freq + timeOffset * 3 + mouseX * 2) *
               (amp * (0.6 + 0.4 * Math.cos(ratio * Math.PI)));
+
             const noise =
               Math.sin(ratio * 10 + timeOffset * 1.3 + offset * 5) * noiseScale * 0.4;
-            const yOnLine = baseY + wave + noise;
+
+            // Local mouse influence
+            const dx = x - mouseX * width;
+            const dy = baseY - mouseY * height;
+            const dist = Math.hypot(dx, dy);
+            const R = 160;
+            const influence = Math.max(0, 1 - dist / R);
+
+            const warp =
+              influence * Math.sin(timeOffset * 10 + ratio * 12) * (amp * 0.18);
+
+            const yOnLine = baseY + wave + noise + warp;
+
             const offsetForward = 6;
             const y = yOnLine - offsetForward;
+
             const baseSize = 3;
-            const size = baseSize + (Math.sin(ratio * 20 + offset * 10) + 1) * 1;
-            const px = x - size / 2;
-            const py = y - size / 2;
-            ctx.fillRect(px, py, size, size);
+            const size =
+              baseSize +
+              (Math.sin(ratio * 20 + offset * 10) + 1) * 1 +
+              influence * 1.6;
+
+            ctx.fillStyle = `rgba(0,0,0,${0.35 + influence * 0.25})`;
+            ctx.fillRect(x - size / 2, y - size / 2, size, size);
           }
         }
+      }
+
+      function drawParticles(t) {
+        ctx.save();
+        ctx.globalAlpha = 0.55;
+
+        for (const p of particles) {
+          // Move
+          p.x += p.speed;
+          if (p.x > width + 20) p.x = -20;
+
+          const line = lines[p.lineIndex];
+          const centerY = yAt(line, p.x, t);
+
+          // Local mouse influence
+          const dx = p.x - mouseX * width;
+          const dy = centerY - mouseY * height;
+          const dist = Math.hypot(dx, dy);
+          const R = 170;
+          const influence = Math.max(0, 1 - dist / R);
+
+          // Float around line
+          p.phase += 0.035 + p.speed * 0.01;
+          const floatY = Math.sin(p.phase + p.x * 0.01) * p.drift;
+
+          // Mouse makes particles "energize"
+          const y =
+            centerY +
+            floatY +
+            influence * Math.sin(t * 0.01 + p.phase) * 10;
+
+          const s = p.size + influence * 1.4;
+
+          ctx.fillStyle = `rgba(0,0,0,${0.25 + influence * 0.35})`;
+          ctx.fillRect(p.x - s / 2, y - s / 2, s, s);
+        }
+
+        ctx.restore();
       }
 
       function loop(timestamp) {
         const dt = timestamp - lastTime;
         lastTime = timestamp;
-        if (dt > 80) {
-          lastTime = timestamp;
-        }
+        if (dt > 80) lastTime = timestamp;
+
         ctx.clearRect(0, 0, width, height);
 
         ctx.save();
         ctx.globalAlpha = 0.4;
-        for (const line of lines) {
-          drawLine(line, timestamp);
-        }
+        for (const line of lines) drawLine(line, timestamp);
         ctx.restore();
+
+        drawParticles(timestamp);
 
         requestAnimationFrame(loop);
       }
 
       resize();
-      window.addEventListener("resize", resize);
+      initParticles();
+
+      // Keep resize behavior consistent (and re-init particles)
+      window.addEventListener("resize", () => {
+        resize();
+        initParticles();
+      });
 
       window.addEventListener("pointermove", (e) => {
         const rect = canvas.getBoundingClientRect();
         mouseX = (e.clientX - rect.left) / (rect.width || 1);
+        mouseY = (e.clientY - rect.top) / (rect.height || 1);
         mouseX = Math.max(0, Math.min(1, mouseX));
+        mouseY = Math.max(0, Math.min(1, mouseY));
       });
 
       requestAnimationFrame(loop);
